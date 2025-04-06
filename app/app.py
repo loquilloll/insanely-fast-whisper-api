@@ -93,6 +93,8 @@ def process(
         )
 
         if diarise_audio is True:
+            if hf_token is None:
+                raise Exception("Missing Hugging Face Token")
             speakers_transcript = diarize(
                 hf_token,
                 url,
@@ -171,6 +173,7 @@ def root(
 
     if file:
         try:
+            logger.debug(f"Received file: {file.filename}")
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
                 tmp.write(file.file.read())
                 tmp_path = tmp.name
@@ -183,21 +186,18 @@ def root(
         logger.debug(f"Received URL: {url}")
         processing_url = url
 
-    if processing_url.lower().startswith("http") is False and not os.path.exists(processing_url):
-        raise HTTPException(status_code=400, detail="Invalid URL")
-
     logger.debug(f"Processing URL: {processing_url}")
 
-    if processing_url.lower().startswith("http") is False and not os.path.exists(processing_url):
-        raise HTTPException(status_code=400, detail="Invalid URL")
+    if not processing_url.lower().startswith("http") and not os.path.exists(processing_url):
+        raise HTTPException(status_code=400, detail="Invalid URL or file path")
 
     logger.debug("Processing URL validation passed.")
-    raise HTTPException(status_code=500, detail="Missing Hugging Face Token")
+
+    if diarise_audio is True and hf_token is None:
+        raise HTTPException(status_code=500, detail="Missing Hugging Face Token")
 
     if is_async is True and webhook is None:
-        raise HTTPException(
-            status_code=400, detail="Webhook is required for async tasks"
-        )
+        raise HTTPException(status_code=400, detail="Webhook is required for async tasks")
 
     task_id = managed_task_id if managed_task_id is not None else str(uuid.uuid4())
 
@@ -208,7 +208,7 @@ def root(
                 loop.run_in_executor(
                     None,
                     process,
-                    processing_url,  # Changed from `url` to `processing_url`
+                    processing_url,  # Correctly using `processing_url`
                     task,
                     language,
                     batch_size,
@@ -227,7 +227,7 @@ def root(
         else:
             running_tasks[task_id] = None
             outputs = process(
-                url,
+                processing_url,  # Changed from `url` to `processing_url`
                 task,
                 language,
                 batch_size,
