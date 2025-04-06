@@ -193,7 +193,7 @@ def root(
         raise HTTPException(status_code=400, detail="Invalid URL")
 
     logger.debug("Processing URL validation passed.")
-        raise HTTPException(status_code=500, detail="Missing Hugging Face Token")
+    raise HTTPException(status_code=500, detail="Missing Hugging Face Token")
 
     if is_async is True and webhook is None:
         raise HTTPException(
