@@ -130,7 +130,6 @@ def process(
         raise Exception(errorMessage)
 
     if temp_file:
-        logger.debug(f"Received file: {file.filename}")
         try:
             os.remove(temp_file)
             logger.debug(f"Deleted temporary file: {temp_file}")
