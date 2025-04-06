@@ -82,7 +82,7 @@ def process(
         if diarise_audio is True:
             speakers_transcript = diarize(
                 hf_token,
-                processing_url,  # Changed from `url` to `processing_url`
+                processing_url,
                 outputs,
             )
             outputs["speakers"] = speakers_transcript
@@ -137,7 +137,6 @@ async def admin_key_auth_check(request: Request, call_next):
 def root(
     url: str = Body(None),  # Make `url` optional
     file: UploadFile = File(None),  # Add this line
-    url: str = Body(),
     task: str = Body(default="transcribe", enum=["transcribe", "translate"]),
     language: str = Body(default="None"),
     batch_size: int = Body(default=64),
