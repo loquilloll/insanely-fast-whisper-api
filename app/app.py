@@ -82,7 +82,7 @@ def process(
         if diarise_audio is True:
             speakers_transcript = diarize(
                 hf_token,
-                processing_url,
+                url,
                 outputs,
             )
             outputs["speakers"] = speakers_transcript
