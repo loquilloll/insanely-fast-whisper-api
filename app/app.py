@@ -8,6 +8,8 @@ from fastapi import (
     Request,
 )
 from fastapi.responses import JSONResponse
+from fastapi import File, UploadFile
+import tempfile
 from pydantic import BaseModel
 import torch
 from transformers import pipeline
@@ -59,8 +61,11 @@ def process(
     task_id: str | None = None,
 ):
     errorMessage: str | None = None
-    outputs = {}
+    temp_file = None
     try:
+        if not url.startswith("http") and os.path.exists(url):
+            temp_file = url  # Store the temp file path for later deletion
+
         generate_kwargs = {
             "task": task,
             "language": None if language == "None" else language,
@@ -77,7 +82,7 @@ def process(
         if diarise_audio is True:
             speakers_transcript = diarize(
                 hf_token,
-                url,
+                processing_url,  # Changed from `url` to `processing_url`
                 outputs,
             )
             outputs["speakers"] = speakers_transcript
@@ -108,6 +113,12 @@ def process(
     if errorMessage is not None:
         raise Exception(errorMessage)
 
+    if temp_file:
+        try:
+            os.remove(temp_file)
+        except Exception as e:
+            print(f"Failed to delete temp file {temp_file}: {e}")
+
     return outputs
 
 
@@ -124,6 +135,8 @@ async def admin_key_auth_check(request: Request, call_next):
 
 @app.post("/")
 def root(
+    url: str = Body(None),  # Make `url` optional
+    file: UploadFile = File(None),  # Add this line
     url: str = Body(),
     task: str = Body(default="transcribe", enum=["transcribe", "translate"]),
     language: str = Body(default="None"),
@@ -136,7 +149,21 @@ def root(
     is_async: bool = Body(default=False),
     managed_task_id: str | None = Body(default=None),
 ):
-    if url.lower().startswith("http") is False:
+    if not url and not file:
+        raise HTTPException(status_code=400, detail="Either URL or file must be provided")
+
+    if file:
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+                tmp.write(file.file.read())
+                tmp_path = tmp.name
+            processing_url = tmp_path
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+    else:
+        processing_url = url
+
+    if processing_url.lower().startswith("http") is False and not os.path.exists(processing_url):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
     if diarise_audio is True and hf_token is None:
@@ -156,7 +183,7 @@ def root(
                 loop.run_in_executor(
                     None,
                     process,
-                    url,
+                    processing_url,  # Changed from `url` to `processing_url`
                     task,
                     language,
                     batch_size,
