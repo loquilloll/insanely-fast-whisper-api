@@ -10,6 +10,18 @@ from fastapi import (
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 import tempfile
+import logging
+
+# Configure logging to display debug messages
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel
 import torch
 from transformers import pipeline
@@ -62,6 +74,7 @@ def process(
 ):
     errorMessage: str | None = None
     temp_file = None
+    logger.debug(f"Processing task {task_id}: url={url}, task={task}, language={language}, batch_size={batch_size}, timestamp={timestamp}, diarise_audio={diarise_audio}")
     try:
         if not url.startswith("http") and os.path.exists(url):
             temp_file = url  # Store the temp file path for later deletion
@@ -86,9 +99,12 @@ def process(
                 outputs,
             )
             outputs["speakers"] = speakers_transcript
+        logger.debug(f"Completed task {task_id}: outputs={outputs}")
     except asyncio.CancelledError:
         errorMessage = "Task Cancelled"
+        logger.warning(f"Task {task_id} was cancelled.")
     except Exception as e:
+        logger.error(f"Error in task {task_id}: {str(e)}")
         errorMessage = str(e)
 
     if task_id is not None:
@@ -114,9 +130,12 @@ def process(
         raise Exception(errorMessage)
 
     if temp_file:
+        logger.debug(f"Received file: {file.filename}")
         try:
             os.remove(temp_file)
+            logger.debug(f"Deleted temporary file: {temp_file}")
         except Exception as e:
+            logger.error(f"Failed to delete temporary file {temp_file}: {e}")
             print(f"Failed to delete temp file {temp_file}: {e}")
 
     return outputs
@@ -156,16 +175,24 @@ def root(
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
                 tmp.write(file.file.read())
                 tmp_path = tmp.name
+            logger.debug(f"Saved uploaded file to temporary path: {tmp_path}")
             processing_url = tmp_path
         except Exception as e:
+            logger.error(f"Failed to upload file: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
     else:
+        logger.debug(f"Received URL: {url}")
         processing_url = url
 
     if processing_url.lower().startswith("http") is False and not os.path.exists(processing_url):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
-    if diarise_audio is True and hf_token is None:
+    logger.debug(f"Processing URL: {processing_url}")
+
+    if processing_url.lower().startswith("http") is False and not os.path.exists(processing_url):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+
+    logger.debug("Processing URL validation passed.")
         raise HTTPException(status_code=500, detail="Missing Hugging Face Token")
 
     if is_async is True and webhook is None:
@@ -176,7 +203,7 @@ def root(
     task_id = managed_task_id if managed_task_id is not None else str(uuid.uuid4())
 
     try:
-        resp = {}
+        logger.debug(f"Starting {'asynchronous' if is_async else 'synchronous'} processing for task_id: {task_id}")
         if is_async is True:
             backgroundTask = asyncio.ensure_future(
                 loop.run_in_executor(
@@ -219,6 +246,7 @@ def root(
             resp["fly_machine_id"] = fly_machine_id
         return resp
     except Exception as e:
+        logger.error(f"Exception during processing for task_id {task_id}: {e}")
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
