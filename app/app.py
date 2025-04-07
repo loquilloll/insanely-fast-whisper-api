@@ -12,16 +12,31 @@ from fastapi import File, UploadFile
 import tempfile
 import logging
 
-# Configure logging to display informational messages and above
+# Retrieve logging level from environment variable, default to 'INFO'
+logging_level_str = os.environ.get('LOGGING_LEVEL', 'INFO').upper()
+
+# List of valid logging levels
+valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+
+if logging_level_str not in valid_levels:
+    numeric_level = logging.INFO
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        f"Invalid LOGGING_LEVEL '{logging_level_str}' provided. Defaulting to 'INFO'."
+    )
+else:
+    # Convert string to numeric logging level
+    numeric_level = getattr(logging, logging_level_str, logging.INFO)
+
+# Configure logging to use the retrieved level
 logging.basicConfig(
-    level=logging.INFO,  # Changed from DEBUG to INFO
+    level=numeric_level,  # Use the logging level from environment variable
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler()
     ]
 )
 
-logger = logging.getLogger(__name__)
 from pydantic import BaseModel
 import torch
 from transformers import pipeline
