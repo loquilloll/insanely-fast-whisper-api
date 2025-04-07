@@ -29,11 +29,134 @@ Here are some benchmarks we ran on Nvidia A100 - 80GB and fly.io GPU infra👇
 
 The estimated startup time for the Fly machine with GPU and loading up the model is around ~20 seconds. The rest of the time is spent on the actual computation.
 
-## Docker image
+## Docker Image
+
 ```
 yoeven/insanely-fast-whisper-api:latest
 ```
-Docker hub: [yoeven/insanely-fast-whisper-api](https://hub.docker.com/r/yoeven/insanely-fast-whisper-api)
+
+Docker Hub: [yoeven/insanely-fast-whisper-api](https://hub.docker.com/r/yoeven/insanely-fast-whisper-api)
+
+## Running with Docker
+
+To run the application using Docker with GPU support, follow these steps:
+
+### **Prerequisites**
+- **Docker Engine** installed on your machine. Refer to the [official Docker installation guide](https://docs.docker.com/get-docker/) if you haven't installed it yet.
+- **NVIDIA GPU** with the appropriate drivers installed.
+- **NVIDIA Container Toolkit** to enable GPU support in Docker. Follow the [NVIDIA Container Toolkit installation guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+
+### **Steps**
+
+1. **Pull the Docker Image**
+
+   ```bash
+   docker pull yoeven/insanely-fast-whisper-api:latest
+   ```
+
+2. **Run the Docker Container with GPU Support**
+
+   ```bash
+   docker run --gpus all -d \
+     -p 8000:8000 \
+     --name insanely-fast-whisper-api \
+     -e ADMIN_KEY=<your_admin_key> \
+     -e HF_TOKEN=<your_hf_token> \
+     yoeven/insanely-fast-whisper-api:latest
+   ```
+
+   **Explanation:**
+   - `--gpus all`: Enables all available GPUs for the container.
+   - `-d`: Runs the container in detached mode.
+   - `-p 8000:8000`: Maps port `8000` of the container to port `8000` on the host machine.
+   - `--name insanely-fast-whisper-api`: Assigns a name to the container for easier management.
+   - `-e ADMIN_KEY=<your_admin_key>`: Sets the `ADMIN_KEY` environment variable for admin authentication.
+   - `-e HF_TOKEN=<your_hf_token>`: Sets the `HF_TOKEN` environment variable required for speaker diarization.
+
+3. **Verify the Container is Running**
+
+   ```bash
+   docker ps
+   ```
+
+   You should see the `insanely-fast-whisper-api` container listed and running.
+
+4. **Access the API**
+
+   Open your browser or use `curl` to interact with the API at `http://localhost:8000/`.
+
+### **Stopping and Removing the Container**
+
+- **Stop the Container:**
+
+  ```bash
+  docker stop insanely-fast-whisper-api
+  ```
+
+- **Remove the Container:**
+
+  ```bash
+  docker rm insanely-fast-whisper-api
+  ```
+
+## Running with Podman
+
+Podman is an alternative to Docker that offers similar functionalities with a daemonless architecture. To run the application using Podman with GPU support, follow these steps:
+
+### **Prerequisites**
+- **Podman** installed on your machine. Refer to the [official Podman installation guide](https://podman.io/getting-started/installation) if you haven't installed it yet.
+- **NVIDIA GPU** with the appropriate drivers installed.
+- **NVIDIA Container Toolkit** configured for Podman. Podman uses the same NVIDIA Container Toolkit as Docker for GPU support. Follow the [NVIDIA Container Toolkit installation guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) and ensure it's set up for use with Podman.
+
+### **Steps**
+
+1. **Pull the Docker Image Using Podman**
+
+   ```bash
+   podman pull docker.io/yoeven/insanely-fast-whisper-api:latest
+   ```
+
+2. **Run the Podman Container with GPU Support**
+
+   ```bash
+   podman run --rm -d \
+     --gpus all \
+     -p 8000:8000 \
+     --name insanely-fast-whisper-api \
+     -e ADMIN_KEY=<your_admin_key> \
+     -e HF_TOKEN=<your_hf_token> \
+     docker.io/yoeven/insanely-fast-whisper-api:latest
+   ```
+
+   **Explanation:**
+   - `--rm`: Automatically removes the container when it exits.
+   - `--gpus all`: Enables all available GPUs for the container.
+   - `-d`: Runs the container in detached mode.
+   - `-p 8000:8000`: Maps port `8000` of the container to port `8000` on the host machine.
+   - `--name insanely-fast-whisper-api`: Assigns a name to the container for easier management.
+   - `-e ADMIN_KEY=<your_admin_key>`: Sets the `ADMIN_KEY` environment variable for admin authentication.
+   - `-e HF_TOKEN=<your_hf_token>`: Sets the `HF_TOKEN` environment variable required for speaker diarization.
+   - `docker.io/yoeven/insanely-fast-whisper-api:latest`: Specifies the image to use.
+
+3. **Verify the Container is Running**
+
+   ```bash
+   podman ps
+   ```
+
+   You should see the `insanely-fast-whisper-api` container listed and running.
+
+4. **Access the API**
+
+   Open your browser or use `curl` to interact with the API at `http://localhost:8000/`.
+
+### **Stopping the Podman Container**
+
+Since we used the `--rm` flag, the container will be automatically removed when stopped. To stop the container:
+
+```bash
+podman stop insanely-fast-whisper-api
+```
 
 ## Deploying to Fly
 - Make sure you already have access to Fly GPUs.
