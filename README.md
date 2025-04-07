@@ -2,15 +2,15 @@
 An API to transcribe audio with [OpenAI's Whisper Large v3](https://huggingface.co/openai/whisper-large-v3)! Powered by 🤗 Transformers, Optimum & flash-attn
 
 Features:
-* 🎤 Transcribe audio to text at blazing fast speeds
-* 📖 Fully open source and deployable on any GPU cloud provider
-* 🗣️ Built-in speaker diarization
-* ⚡ Easy to use and Fast API layer
-* 📃 Async background tasks and webhooks
-* 🔥 Optimized for concurrency and parallel processing
-* ✅ Task management, cancel and status endpoints
-* 🔒 Admin authentication for secure API access
-* 🧩 Fully managed API available on [JigsawStack](https://jigsawstack.com/speech-to-text)
+- 🎤 Transcribe audio to text at blazing fast speeds
+- 📖 Fully open source and deployable on any GPU cloud provider
+- 🗣️ Built-in speaker diarization
+- ⚡ Easy to use and Fast API layer
+- 📃 Async background tasks and webhooks
+- 🔥 Optimized for concurrency and parallel processing
+- ✅ Task management, cancel and status endpoints
+- 🔒 Admin authentication for secure API access
+- 🧩 Fully managed API available on [JigsawStack](https://jigsawstack.com/speech-to-text)
 
 Based on [Insanely Fast Whisper CLI](https://github.com/Vaibhavs10/insanely-fast-whisper) project. Check it out if you like to set up this project locally or understand the background of insanely-fast-whisper.
 
@@ -21,7 +21,7 @@ With [Fly.io recent GPU service launch](https://fly.io/docs/gpus/gpu-quickstart/
 
 Here are some benchmarks we ran on Nvidia A100 - 80GB and fly.io GPU infra👇
 | Optimization type    | Time to Transcribe (150 mins of Audio) |
-|------------------|------------------|
+|-------------------|----------------------------------------|
 | **large-v3 (Transformers) (`fp16` + `batching [24]` + `Flash Attention 2`)** | **~2 (*1 min 38 sec*)**            |
 | **large-v3 (Transformers) (`fp16` + `batching [24]` + `Flash Attention 2` + `diarization`)** | **~2 (*3 min 16 sec*)**            |
 | **large-v3 (Transformers) (`fp16` + `batching [24]` + `Flash Attention 2` + `fly machine startup`)** | **~2 (*1 min 58 sec*)**            |
@@ -159,44 +159,64 @@ podman stop insanely-fast-whisper-api
 ```
 
 ## Deploying to Fly
-- Make sure you already have access to Fly GPUs.
-- Clone the project locally and open a terminal in the root
-- Rename the `app` name in the `fly.toml` if you like
-- Remove `image = 'yoeven/insanely-fast-whisper-api:latest'` in `fly.toml` only if you want to rebuild the image from the `Dockerfile`
 
-[Install fly cli](https://fly.io/docs/hands-on/install-flyctl/) if don't already have it
+- Ensure you already have access to Fly GPUs.
+- Clone the project locally and navigate to the root directory.
+- Rename the `app` name in the `fly.toml` file if desired.
+- Remove `image = 'yoeven/insanely-fast-whisper-api:latest'` from `fly.toml` only if you want to rebuild the image from the `Dockerfile`.
 
-Only need to run this the first time you launch a new fly app
+[Install Fly CLI](https://fly.io/docs/hands-on/install-flyctl/) if you haven't already.
+
+**Initial Deployment:**
+
+Only need to run this the first time you launch a new Fly app:
+
 ```bash
 fly launch
 ```
 
-- Fly will prompt: `Would you like to copy its configuration to the new app? (y/N)`. Yes (`y`) to copy configuration from the repo.
+- Fly will prompt: `Would you like to copy its configuration to the new app? (y/N)`. Type `y` to copy the configuration from the repository.
+- Fly will prompt: `Do you want to tweak these settings before proceeding?` If you have nothing to adjust, type `n` to proceed and deploy.
 
-- Fly will prompt: `Do you want to tweak these settings before proceeding` if you have nothing to adjust. Most of the required settings are already configured in the `fly.toml` file. No `n` to proceed and deploy.
+The first deployment will take some time since the image is large. Subsequent deployments will be faster.
 
-The first time you deploy it will take some time since the image is huge. Subsequent deploys will be a lot faster.
+**Setting Up Secrets:**
 
-Run the following if you want to set up speaker diarization or an auth token to secure your API:
+Run the following to set up speaker diarization or an auth token to secure your API:
 
 ```bash
 fly secrets set ADMIN_KEY=<your_token> HF_TOKEN=<your_hf_key>
 ```
-Run `fly secrets list` to check if the secrets exist.
 
-To get the Hugging face token for speaker diarization you need to do the following:
-1. Accept [`pyannote/segmentation-3.0`](https://hf.co/pyannote/segmentation-3.0) user conditions
-2. Accept [`pyannote/speaker-diarization-3.1`](https://hf.co/pyannote/speaker-diarization-3.1) user conditions
+Verify that the secrets exist by running:
+
+```bash
+fly secrets list
+```
+
+**Obtaining Hugging Face Token:**
+
+To get the Hugging Face token for speaker diarization, follow these steps:
+
+1. Accept the user conditions for [`pyannote/segmentation-3.0`](https://hf.co/pyannote/segmentation-3.0).
+2. Accept the user conditions for [`pyannote/speaker-diarization-3.1`](https://hf.co/pyannote/speaker-diarization-3.1).
 3. Create an access token at [`hf.co/settings/tokens`](https://hf.co/settings/tokens).
 
+**Accessing the API:**
 
-Your API should look something like this:
+Your API should be accessible at:
 
 ```
 https://insanely-fast-whisper-api.fly.dev
 ```
 
-Run `fly logs -a insanely-fast-whisper-api` to view logs in real time of your fly machine.
+**Viewing Logs:**
+
+Run the following command to view real-time logs of your Fly machine:
+
+```bash
+fly logs -a insanely-fast-whisper-api
+```
 
 ## Deploying to other cloud providers
 Since this is a dockerized app, you can deploy it to any cloud provider that supports docker and GPUs with a few config tweaks.
@@ -208,7 +228,7 @@ Since this is a dockerized app, you can deploy it to any cloud provider that sup
 ## API usage
 
 ### Authentication
-If you had set up the `ADMIN_KEY` environment secret. You'll need to pass `x-admin-api-key` in the header with the value of the key you previously set.
+If you have set up the `ADMIN_KEY` environment secret, you'll need to pass `x-admin-api-key` in the header with the value of the key you previously set.
 
 
 ### Endpoints
@@ -222,19 +242,19 @@ Depending on the cloud provider you deploy to, the base URL will be different.
 #### **POST** `/`
 Transcribe or translate audio into text
 ##### Body params (JSON)
-| Name    | value |
-|------------------|------------------|
-| url (Required) |  url of audio |
-| task | `transcribe`, `translate`  default: `transcribe` |
-| language | `None`, `en`, [other languages](https://huggingface.co/openai/whisper-large-v3) default: `None` Auto detects language
-| batch_size | Number of parallel batches you want to compute. Reduce if you face OOMs. default: `64` |
-| timestamp | `chunk`, `word`  default: `chunk` |
-| diarise_audio | Diarise the audio clips by speaker. You will need to set hf_token. default:`false` |
-| webhook | Webhook `POST` call on completion or error. default: `None` |
-| webhook.url | URL to send the webhook |
-| webhook.header | Headers to send with the webhook |
-| is_async | Run task in background and sends results to webhook URL. `true`, `false` default: `false` |
-| managed_task_id | Custom Task ID used to reference ongoing task. default: `uuid() v4 will be generated for each transcription task` |
+| **Name**             | **Value**                                                                                     |
+|----------------------|-----------------------------------------------------------------------------------------------|
+| `url` *(Required)*   | URL of the audio                                                                                |
+| `task`               | `transcribe`, `translate`<br>**Default:** `transcribe`                                       |
+| `language`           | `None`, `en`, [other languages](https://huggingface.co/openai/whisper-large-v3)<br>**Default:** `None` (Auto detects language) |
+| `batch_size`         | Number of parallel batches you want to compute. Reduce if you face OOMs.<br>**Default:** `64` |
+| `timestamp`          | `chunk`, `word`<br>**Default:** `chunk`                                                       |
+| `diarise_audio`      | Diarize the audio clips by speaker. You will need to set `HF_TOKEN`.<br>**Default:** `false` |
+| `webhook`            | Webhook `POST` call on completion or error.<br>**Default:** `None`                           |
+| `webhook.url`        | URL to send the webhook                                                                        |
+| `webhook.header`     | Headers to send with the webhook                                                               |
+| `is_async`           | Run task in background and sends results to webhook URL.<br>`true`, `false`<br>**Default:** `false` |
+| `managed_task_id`    | Custom Task ID used to reference an ongoing task.<br>**Default:** `uuid() v4` will be generated for each transcription task |
 
 #### **GET** `/tasks`
 Get all active transcription tasks, both async background tasks and ongoing tasks
@@ -246,42 +266,43 @@ Get the status of a task, completed tasks will be removed from the list which ma
 Cancel async background task. Only transcription jobs created with `is_async` set to `true` can be cancelled.
 
 
-## Running locally
+## Running Locally
+
 ```bash
-# clone the repo
-$ git clone https://github.com/jigsawstack/insanely-fast-whisper-api.git
+# Clone the repository
+git clone https://github.com/jigsawstack/insanely-fast-whisper-api.git
 
-# change the working directory
-$ cd insanely-fast-whisper-api
+# Change the working directory
+cd insanely-fast-whisper-api
 
-# install torch
-$ pip3 install torch torchvision torchaudio
+# Install PyTorch and related packages
+pip3 install torch torchvision torchaudio
 
-# upgrade wheel and install required packages for FlashAttention
-$ pip3 install -U wheel && pip install ninja packaging
+# Upgrade wheel and install required packages for FlashAttention
+pip3 install -U wheel && pip install ninja packaging
 
-# install FlashAttention
-$ pip3 install flash-attn --no-build-isolation
+# Install FlashAttention without build isolation
+pip3 install flash-attn --no-build-isolation
 
-# generate updated requirements.txt if you want to use other management tools (Optional)
-$ poetry export --output requirements.txt
+# Generate updated requirements.txt if you want to use other management tools (Optional)
+poetry export --output requirements.txt
 
-# get the path of python
-$ which python3
+# Get the path of Python interpreter
+which python3
 
-# setup virtual environment 
-$ poetry env use /full/path/to/python
+# Setup virtual environment using Poetry
+poetry env use /full/path/to/python
 
-# install the requirements
-$ poetry install
+# Install the project dependencies
+poetry install
 
-# run the app
-$ uvicorn app.app:app --reload
+# Run the application with Uvicorn
+uvicorn app.app:app --reload
 ```
 
 ## Extra
 ### Shutting down fly machine programmatically
-Fly machines are charged by the second and might take up to 15mins of idling before it decides to shut it self down. You can shut down the machine when you're done with the API to save costs. You can do this by sending a `POST` request to the following endpoint:
+Fly machines are charged by the second and might take up to 15 minutes of idling before they decide to shut themselves down. You can shut down the machine when you're done with the API to save costs by sending a `POST` request to the following endpoint:
 ```
 https://api.machines.dev/v1/apps/<app_name>/machines/<machine_id>/stop
 ```
