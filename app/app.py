@@ -12,9 +12,9 @@ from fastapi import File, UploadFile
 import tempfile
 import logging
 
-# Configure logging to display debug messages
+# Configure logging to display informational messages and above
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,  # Changed from DEBUG to INFO
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler()
