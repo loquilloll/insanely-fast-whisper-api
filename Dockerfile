@@ -20,13 +20,8 @@ WORKDIR /app
 # Copy only the dependency files first for better caching
 COPY poetry.lock pyproject.toml ./
 
-# Install dependencies without installing the package itself
-RUN poetry install --no-root --no-interaction --no-ansi
-
-# Copy the application code
+# Install all dependencies and the package in a single RUN command
 COPY . .
-
-# Install the package and additional dependencies, then clean up caches
 RUN poetry install --no-interaction --no-ansi \
     && pip install --upgrade wheel \
     && pip install ninja packaging \

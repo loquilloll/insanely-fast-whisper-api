@@ -7,7 +7,6 @@
 
 # Exclude Docker configuration
 docker-compose.yml
-Dockerfile
 
 # Exclude Dependency Directories
 node_modules/
