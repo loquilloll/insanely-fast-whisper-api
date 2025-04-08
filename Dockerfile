@@ -1,33 +1,48 @@
-FROM nvcr.io/nvidia/pytorch:24.01-py3
+# Stage 1: Builder
+FROM nvcr.io/nvidia/pytorch:24.01-py3 AS builder
 
 ENV PYTHON_VERSION=3.10
 ENV POETRY_VENV=/app/.venv
 
+# Install dependencies and Poetry, then clean up
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python${PYTHON_VERSION}-venv \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN python -m venv $POETRY_VENV \
-    && $POETRY_VENV/bin/pip install -U pip setuptools \
-    && $POETRY_VENV/bin/pip install poetry==1.7.1
+        python${PYTHON_VERSION}-venv \
+        ffmpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m venv $POETRY_VENV \
+    && $POETRY_VENV/bin/pip install --upgrade pip setuptools poetry==1.7.1 \
+    && poetry config virtualenvs.in-project true
 
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 WORKDIR /app
 
+# Copy only the dependency files first for better caching
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry config virtualenvs.in-project true
-RUN poetry install --no-root
+# Install dependencies without installing the package itself
+RUN poetry install --no-root --no-interaction --no-ansi
 
+# Copy the application code
 COPY . .
 
-RUN poetry install
-RUN $POETRY_VENV/bin/pip install -U wheel \
-    && $POETRY_VENV/bin/pip install ninja packaging
+# Install the package and additional dependencies, then clean up caches
+RUN poetry install --no-interaction --no-ansi \
+    && pip install --upgrade wheel \
+    && pip install ninja packaging \
+    && pip install flash-attn --no-build-isolation \
+    && rm -rf ~/.cache/pip
 
-RUN $POETRY_VENV/bin/pip install flash-attn --no-build-isolation
+# Stage 2: Final Image
+FROM nvcr.io/nvidia/pytorch:24.01-py3
+
+ENV POETRY_VENV=/app/.venv
+ENV PATH="${PATH}:${POETRY_VENV}/bin"
+
+WORKDIR /app
+
+# Copy the virtual environment and application code from the builder
+COPY --from=builder /app /app
 
 EXPOSE 9000
 

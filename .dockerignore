@@ -1,1 +1,56 @@
-fly.toml
+# Exclude Version Control
+.git/
+.gitignore
+
+# Exclude GitHub configuration
+.github/
+
+# Exclude Docker configuration
+docker-compose.yml
+Dockerfile
+
+# Exclude Dependency Directories
+node_modules/
+venv/
+.env/
+.Python
+__pycache__/
+*.pyc
+
+# Exclude Build Directories
+build/
+dist/
+*.egg-info/
+
+# Exclude Temporary Files and Directories
+tmp/
+*.tmp
+*.log
+*.lock
+
+# Exclude IDE and Editor Configurations
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Exclude Operating System Files
+.DS_Store
+Thumbs.db
+
+# Exclude Testing and Coverage Files
+tests/
+coverage/
+
+# Exclude CI/CD Configurations (if not needed in the build)
+*.yml
+*.yaml
+
+# Exclude Documentation (if not needed in the build)
+docs/
+
+# Exclude Other Unnecessary Files
+*.md
+*.rst
+LICENSE
+README.md
