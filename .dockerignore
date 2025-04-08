@@ -26,7 +26,6 @@ dist/
 tmp/
 *.tmp
 *.log
-*.lock
 
 # Exclude IDE and Editor Configurations
 .vscode/
